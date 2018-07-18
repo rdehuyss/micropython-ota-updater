@@ -10,8 +10,8 @@ class OTAUpdater:
     def __init__(self, github_repo, module='', main_dir='main'):
         self.http_client = HttpClient()
         self.github_repo = github_repo.rstrip('/').replace('https://github.com', 'https://api.github.com/repos')
-        self.module = module
-        os.chdir(module)
+        self.main_dir = main_dir
+        self.module = module.rstrip('/')
 
     @staticmethod
     def using_network(ssid='WiFi-2.4-62A1', password='internetisvaniedereen'):
@@ -26,13 +26,13 @@ class OTAUpdater:
         print('network config:', sta_if.ifconfig())
 
     def apply_pending_updates_if_available(self):
-        if 'next' in os.listdir():
-            print('Pending update found: ', self.get_version('next'))
-            self.rmtree(self.main_dir)
-            os.rename('next', self.main_dir)
+        if 'next' in os.listdir(self.module):
+            print('Pending update found: ', self.get_version(self.modulepath('next')))
+            self.rmtree(self.modulepath(self.main_dir))
+            os.rename(self.modulepath('next'), self.modulepath(self.main_dir))
 
     def download_updates_if_available(self):
-        current_version = self.get_version(self.main_dir)
+        current_version = self.get_version(self.modulepath(self.main_dir))
         latest_version = self.get_latest_version()
 
         print('Checking version... ')
@@ -42,7 +42,7 @@ class OTAUpdater:
             print('Updating...')
             os.mkdir('next')
             self.download_all_files(self.github_repo + '/contents/' + self.main_dir, latest_version)
-            with open('next/.version', 'w') as versionfile:
+            with open(self.modulepath('next/.version'), 'w') as versionfile:
                 versionfile.write(latest_version)
                 versionfile.close()
 
@@ -50,15 +50,15 @@ class OTAUpdater:
         return False
             
 
-    def rmtree(self, top):
-        for entry in os.ilistdir(top):
+    def rmtree(self, directory):
+        for entry in os.ilistdir(directory):
             is_dir = entry[1] == 0x4000
             if is_dir:
-                self.rmtree(top + '/' + entry[0])
+                self.rmtree(directory + '/' + entry[0])
 
             else:
-                os.remove(top + '/' + entry[0])
-        os.rmdir(top)
+                os.remove(directory + '/' + entry[0])
+        os.rmdir(directory)
 
     def get_version(self, directory):
         if '.version' in os.listdir(directory):
@@ -80,10 +80,10 @@ class OTAUpdater:
             try:
                 if file['type'] == 'file':
                     download_url = file['download_url']
-                    download_path = 'next/' + file['path'].replace(self.main_dir + '/', '')
+                    download_path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
                     self.download_file(download_url.replace('refs/tags/', ''), download_path)
                 elif file['type'] == 'dir':
-                    path = 'next/' + file['path'].replace(self.main_dir + '/', '')
+                    path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
                     os.mkdir(path)
                     self.download_all_files(root_url + '/' + file['name'], version)
             except:
@@ -100,6 +100,9 @@ class OTAUpdater:
             finally:
                 response.close()
                 outfile.close()
+
+    def modulepath(self, path):
+        return self.module + '/' + path if self.module else path
 
 
 class Response:
