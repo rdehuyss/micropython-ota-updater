@@ -30,6 +30,7 @@ class OTAUpdater:
             print('Pending update found: ', self.get_version(self.modulepath('next')))
             self.rmtree(self.modulepath(self.main_dir))
             os.rename(self.modulepath('next'), self.modulepath(self.main_dir))
+            print('Update applied (', self.get_version(self.modulepath('next')), '), ready to rock and roll')
 
     def download_updates_if_available(self):
         current_version = self.get_version(self.modulepath(self.main_dir))
