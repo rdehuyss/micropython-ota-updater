@@ -26,11 +26,11 @@ class OTAUpdater:
     def apply_pending_updates_if_available(self):
         if 'next' in os.listdir():
             print('Pending update found: ', self.get_version('next'))
-            self.rmtree('main')
-            os.rename('next', 'main')
+            self.rmtree(self.main_dir)
+            os.rename('next', self.main_dir)
 
     def download_updates_if_available(self):
-        current_version = self.get_version('main')
+        current_version = self.get_version(self.main_dir)
         latest_version = self.get_latest_version()
 
         print('Checking version... ')
@@ -76,10 +76,10 @@ class OTAUpdater:
             try:
                 if file['type'] == 'file':
                     download_url = file['download_url']
-                    download_path = 'next/' + file['path'].replace('main/', '')
+                    download_path = 'next/' + file['path'].replace(self.main_dir + '/', '')
                     self.download_file(download_url.replace('refs/tags/', ''), download_path)
                 elif file['type'] == 'dir':
-                    path = 'next/' + file['path'].replace('main/', '')
+                    path = 'next/' + file['path'].replace(self.main_dir + '/', '')
                     os.mkdir(path)
                     self.download_all_files(root_url + '/' + file['name'], version)
             except:
