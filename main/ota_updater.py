@@ -7,12 +7,14 @@ import os
 
 class OTAUpdater:
 
-    def __init__(self, github_repo, main_dir='main'):
+    def __init__(self, github_repo, module='', main_dir='main'):
         self.http_client = HttpClient()
         self.github_repo = github_repo.replace('https://github.com', 'https://api.github.com/repos')
-        self.main_dir = main_dir
+        self.module = module
+        os.chdir(module)
 
-    def using_network(self, ssid='WiFi-2.4-62A1', password='internetisvaniedereen'):
+    @staticmethod
+    def using_network(ssid='WiFi-2.4-62A1', password='internetisvaniedereen'):
         import network
         sta_if = network.WLAN(network.STA_IF)
         if not sta_if.isconnected():
