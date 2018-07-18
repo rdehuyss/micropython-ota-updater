@@ -14,7 +14,7 @@ class OTAUpdater:
         self.module = module.rstrip('/')
 
     @staticmethod
-    def using_network(ssid='WiFi-2.4-62A1', password='internetisvaniedereen'):
+    def using_network(ssid, password):
         import network
         sta_if = network.WLAN(network.STA_IF)
         if not sta_if.isconnected():
