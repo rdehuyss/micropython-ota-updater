@@ -61,10 +61,12 @@ class OTAUpdater:
         os.rmdir(top)
 
     def get_version(self, directory):
-        f = open(directory + '/.version')
-        version = f.read()
-        f.close()
-        return version
+        if '.version' in os.listdir(directory):
+            f = open(directory + '/.version')
+            version = f.read()
+            f.close()
+            return version
+        return '0.0'
 
     def get_latest_version(self):
         latest_release = self.http_client.get(self.github_repo + '/releases/latest')
