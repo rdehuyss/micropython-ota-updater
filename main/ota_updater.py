@@ -40,7 +40,7 @@ class OTAUpdater:
         print('\tLatest version: ', latest_version)
         if latest_version > current_version:
             print('Updating...')
-            os.mkdir('next')
+            os.mkdir(self.modulepath('next'))
             self.download_all_files(self.github_repo + '/contents/' + self.main_dir, latest_version)
             with open(self.modulepath('next/.version'), 'w') as versionfile:
                 versionfile.write(latest_version)
@@ -77,17 +77,15 @@ class OTAUpdater:
     def download_all_files(self, root_url, version):
         file_list = self.http_client.get(root_url + '?ref=refs/tags/' + version)
         for file in file_list.json():
-            try:
-                if file['type'] == 'file':
-                    download_url = file['download_url']
-                    download_path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
-                    self.download_file(download_url.replace('refs/tags/', ''), download_path)
-                elif file['type'] == 'dir':
-                    path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
-                    os.mkdir(path)
-                    self.download_all_files(root_url + '/' + file['name'], version)
-            except:
-                print(file)
+            if file['type'] == 'file':
+                download_url = file['download_url']
+                download_path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
+                self.download_file(download_url.replace('refs/tags/', ''), download_path)
+            elif file['type'] == 'dir':
+                path = self.modulepath('next/' + file['path'].replace(self.main_dir + '/', ''))
+                os.mkdir(path)
+                self.download_all_files(root_url + '/' + file['name'], version)
+
         file_list.close()
 
     def download_file(self, url, path):
