@@ -3,6 +3,8 @@
 
 import usocket
 import os
+import gc
+import machine
 
 
 class OTAUpdater:
@@ -24,6 +26,38 @@ class OTAUpdater:
             while not sta_if.isconnected():
                 pass
         print('network config:', sta_if.ifconfig())
+
+    def check_for_update_to_install_during_next_reboot(self):
+        current_version = self.get_version(self.modulepath(self.main_dir))
+        latest_version = self.get_latest_version()
+
+        print('Checking version... ')
+        print('\tCurrent version: ', current_version)
+        print('\tLatest version: ', latest_version)
+        if latest_version > current_version:
+            print('New version available, will download and install on next reboot')
+            with open(self.modulepath('next/.version_on_reboot'), 'w') as versionfile:
+                versionfile.write(latest_version)
+                versionfile.close()
+
+    def download_and_install_update_if_available(self, ssid, password):
+        if 'next' in os.listdir(self.module):
+            if '.version_on_reboot' in os.listdir(self.modulepath('next')):
+                latest_version = self.get_version(self.modulepath('next'), '.version_on_reboot')
+                print('New update found: ', latest_version)
+        else:
+            print('No new updates found...')
+
+    def _download_and_install_update(self, latest_version, ssid, password):
+        OTAUpdater.using_network(ssid, password)
+
+        os.mkdir(self.modulepath('next'))
+        self.download_all_files(self.github_repo + '/contents/' + self.main_dir, latest_version)
+        self.rmtree(self.modulepath(self.main_dir))
+        os.rename(self.modulepath('next/.version_on_reboot'), self.modulepath('next/.version'))
+        os.rename(self.modulepath('next'), self.modulepath(self.main_dir))
+        print('Update installed (', latest_version, '), will reboot now')
+        machine.reset()
 
     def apply_pending_updates_if_available(self):
         if 'next' in os.listdir(self.module):
@@ -56,7 +90,6 @@ class OTAUpdater:
 
             return True
         return False
-            
 
     def rmtree(self, directory):
         for entry in os.ilistdir(directory):
@@ -68,9 +101,9 @@ class OTAUpdater:
                 os.remove(directory + '/' + entry[0])
         os.rmdir(directory)
 
-    def get_version(self, directory):
+    def get_version(self, directory, version_file_name='.version'):
         if '.version' in os.listdir(directory):
-            f = open(directory + '/.version')
+            f = open(directory + '/' + version_file_name)
             version = f.read()
             f.close()
             return version
@@ -102,10 +135,10 @@ class OTAUpdater:
             try:
                 response = self.http_client.get(url)
                 outfile.write(response.text)
-                response.close()
             finally:
                 response.close()
                 outfile.close()
+                gc.collect()
 
     def modulepath(self, path):
         return self.module + '/' + path if self.module else path
