@@ -27,11 +27,17 @@ class OTAUpdater:
 
     def apply_pending_updates_if_available(self):
         if 'next' in os.listdir(self.module):
-            pending_update_version = self.get_version(self.modulepath('next'))
-            print('Pending update found: ', pending_update_version)
-            self.rmtree(self.modulepath(self.main_dir))
-            os.rename(self.modulepath('next'), self.modulepath(self.main_dir))
-            print('Update applied (', pending_update_version, '), ready to rock and roll')
+            if '.version' in os.listdir(self.modulepath('next')):
+                pending_update_version = self.get_version(self.modulepath('next'))
+                print('Pending update found: ', pending_update_version)
+                self.rmtree(self.modulepath(self.main_dir))
+                os.rename(self.modulepath('next'), self.modulepath(self.main_dir))
+                print('Update applied (', pending_update_version, '), ready to rock and roll')
+            else:
+                print('Corrupt pending update found, discarding...')
+                self.rmtree(self.modulepath('next'))
+        else:
+            print('No pending update found')
 
     def download_updates_if_available(self):
         current_version = self.get_version(self.modulepath(self.main_dir))
