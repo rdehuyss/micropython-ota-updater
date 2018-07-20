@@ -33,7 +33,7 @@ The workflow is as follows:
     boot()
    ```
 * the  OTAUpdater will check if there is a file called `next/.version_on_reboot`.
- * If so, it will download the latest code, move it to the `main` folder and do a `machine.reset()`. On reboot, the OTAUpdater will see that you are running on the latest version and just start your code in the `main` folder
- * If not, it will just start your code in the `main` folder
+  * If so, it will download the latest code, move it to the `main` folder and do a `machine.reset()`. On reboot, the OTAUpdater will see that you are running on the latest version and just start your code in the `main` folder
+  * If not, it will just start your code in the `main` folder
 
 This workflow allows you to update devices in the field with ease. 
