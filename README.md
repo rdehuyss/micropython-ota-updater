@@ -50,4 +50,4 @@ updater = OTAUpdater('https://github.com/sergiuszm/cae_fipy', headers={'Authoriz
 See the [article on Medium](https://medium.com/@ronald.dehuysser/micropython-ota-updates-and-github-a-match-made-in-heaven-45fde670d4eb).
 
 ## Example
-[Showerloop](https://github.com/rdehuyss/showerloop/blob/master/main.py) uses the micropython-ota-updater to get the latest version.
+[Showerloop](https://github.com/rdehuyss/showerloop/blob/master/main.py) uses the micropython-ota-updater to get the latest release.
