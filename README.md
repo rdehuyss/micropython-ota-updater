@@ -37,3 +37,15 @@ The workflow is as follows:
   * If not, it will just start your code in the `main` folder
 
 This workflow allows you to update devices in the field with ease. 
+
+## Support for Private Repositories
+This module also adds support for private repositories. To do so, use it as follows:
+
+```python
+token='YOUR_GITHUB_TOKEN'
+updater = OTAUpdater('https://github.com/sergiuszm/cae_fipy', headers={'Authorization': 'token {}'.format(token)})
+```
+
+
+## More info?
+See the [article on Medium](https://medium.com/@ronald.dehuysser/micropython-ota-updates-and-github-a-match-made-in-heaven-45fde670d4eb).
