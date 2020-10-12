@@ -9,12 +9,12 @@ import machine
 
 class OTAUpdater:
 
-    def __init__(self, github_repo, module='', main_dir='main'):
-        self.http_client = HttpClient()
+    def __init__(self, github_repo, module='', main_dir='main', headers={}):
+        self.http_client = HttpClient(headers=headers)
         self.github_repo = github_repo.rstrip('/').replace('https://github.com', 'https://api.github.com/repos')
         self.main_dir = main_dir
         self.module = module.rstrip('/')
-
+        
     @staticmethod
     def using_network(ssid, password):
         import network
@@ -179,7 +179,14 @@ class Response:
 
 class HttpClient:
 
+    def __init__(self, headers={}):
+        self._headers = headers
+
     def request(self, method, url, data=None, json=None, headers={}, stream=None):
+        def _write_headers(sock, _headers):
+            for k in _headers:
+                sock.write(b'{}: {}\r\n'.format(k, _headers[k]))
+
         try:
             proto, dummy, host, path = url.split('/', 3)
         except ValueError:
@@ -209,11 +216,9 @@ class HttpClient:
             if not 'Host' in headers:
                 s.write(b'Host: %s\r\n' % host)
             # Iterate over keys to avoid tuple alloc
-            for k in headers:
-                s.write(k)
-                s.write(b': ')
-                s.write(headers[k])
-                s.write(b'\r\n')
+            _write_headers(s, self._headers)
+            _write_headers(s, headers)
+
             # add user agent
             s.write('User-Agent')
             s.write(b': ')
