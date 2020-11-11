@@ -4,7 +4,7 @@ This micropython module allows for automatic updating of your code on Microcontr
 
 The workflow is as follows:
 * You have a github repo where you host your micropython project
-* In this project, you include all your source code in a folder called 'main'
+* In this project, you include all your source code in a folder called `main`
 * You also include the ota_updater.py (https://github.com/rdehuyss/micropython-ota-updater)
 * whenever you feel fit, you ask the OTAUpdater (on my project this is after a hardware interrupt which starts up the WLAN) to check for a new version using `ota_updater.check_for_update_to_install_during_next_reboot()`
 * if a new version is present, the OTAUpdater generate a `next` folder and within that folder a file called `.version_on_reboot`. After that, you do a `machine.reset()`
