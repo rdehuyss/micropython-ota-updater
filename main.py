@@ -4,7 +4,7 @@ def connectToWifiAndUpdate():
     import machine, network, gc, app.secrets as secrets
     from app.ota_updater import OTAUpdater
 
-    sta_if = network.WLAN(network.STA_/osRenameTestIF)
+    sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():
         print('connecting to network...')
         sta_if.active(True)
