@@ -4,7 +4,7 @@ This micropython module allows for automatic updating of your code on Microcontr
 
 ## History
 - 2018/07/19 - First public release
-- 2020/12/23 - Major rewrite adding support for M5Stack and low memory devices (I now can upgrade big projects with it on devices like M5Stack Core 1 which are very memory constraint) and secrets files
+- 2020/12/23 - Major rewrite adding support for M5Stack and low memory devices (I now can upgrade big projects with it on devices like M5Stack Core 1 which are very memory constraint) and it now also supports secrets files (which are kept during upgrades)
 
 
 ## Workflow
