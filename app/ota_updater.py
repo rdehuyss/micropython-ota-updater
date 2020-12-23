@@ -134,10 +134,8 @@ class OTAUpdater:
     def _download_all_files(self, version, sub_dir=''):
         root_url = self.github_repo + '/contents/' + self.github_src_dir + self.main_dir + sub_dir
         gc.collect()
-        print('fileListUrl', root_url + '?ref=refs/tags/' + version)
         file_list = self.http_client.get(root_url + '?ref=refs/tags/' + version)
         for file in file_list.json():
-            print('test', file)
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
                 download_url = file['download_url']
@@ -188,6 +186,7 @@ class OTAUpdater:
         self._mk_dirs('otaUpdater/osRenameTest')
         os.rename('otaUpdater', 'otaUpdated')
         result = len(os.listdir('otaUpdated')) > 0
+        os.rmdir('otaUpdated/osRenameTest')
         os.rmdir('otaUpdated')
         return result
 

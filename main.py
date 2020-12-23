@@ -1,10 +1,10 @@
 
 
 def connectToWifiAndUpdate():
-    import network, gc, app.secrets as secrets
+    import machine, network, gc, app.secrets as secrets
     from app.ota_updater import OTAUpdater
 
-    sta_if = network.WLAN(network.STA_IF)
+    sta_if = network.WLAN(network.STA_/osRenameTestIF)
     if not sta_if.isconnected():
         print('connecting to network...')
         sta_if.active(True)
@@ -13,9 +13,12 @@ def connectToWifiAndUpdate():
             pass
     print('network config:', sta_if.ifconfig())
     otaUpdater = OTAUpdater('https://github.com/rdehuyss/micropython-ota-updater', main_dir='app', secrets_file="secrets.py")
-    otaUpdater.install_update_if_available()
-    del(otaUpdater)
-    gc.collect()
+    hasUpdated = otaUpdater.install_update_if_available()
+    if hasUpdated:
+        machine.reset()
+    else:
+        del(otaUpdater)
+        gc.collect()
 
 def startApp():
     import app.start
