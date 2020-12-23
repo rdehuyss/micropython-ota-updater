@@ -7,14 +7,15 @@ This micropython module allows for automatic updating of your code on Microcontr
 - 2020/12/23 - Major rewrite adding support for M5Stack and low memory devices (I now can upgrade big projects with it on devices like M5Stack Core 1 which are very memory constraint) and secrets files
 
 
-
+## Workflow
 The workflow is as follows:
 * You have a github repo where you host your micropython project
 * In this project, you include all your source code in a certain folder (e.g. `app`)
 * You also include the ota_updater.py (https://github.com/rdehuyss/micropython-ota-updater)
 * You control your releases with GitHub releases (if you want to deploy a new version, create a new GitHub release)
 
-## There are two different ways to use this:
+There are now two different ways to update your code:
+
 ### Install new version immediately after boot
 You can choose to install a new version yourself. Note that due to memory limitations, this must happen first thing after boot.
 
