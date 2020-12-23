@@ -108,7 +108,7 @@ class OTAUpdater:
         return (current_version, latest_version)
 
     def _create_new_version_file(self, latest_version):
-        os.mkdir(self.modulepath(self.new_version_dir))
+        self.mkdir(self.modulepath(self.new_version_dir))
         with open(self.modulepath(self.new_version_dir + '/.version'), 'w') as versionfile:
             versionfile.write(latest_version)
             versionfile.close()
@@ -134,15 +134,17 @@ class OTAUpdater:
     def _download_all_files(self, version, sub_dir=''):
         root_url = self.github_repo + '/contents/' + self.github_src_dir + self.main_dir + sub_dir
         gc.collect()
+        print('fileListUrl', root_url + '?ref=refs/tags/' + version)
         file_list = self.http_client.get(root_url + '?ref=refs/tags/' + version)
         for file in file_list.json():
+            print('test', file)
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
                 download_url = file['download_url']
                 self._download_file(download_url.replace('refs/tags/', ''), path)
             elif file['type'] == 'dir':
                 print('Creating dir', path)
-                os.mkdir(path)
+                self.mkdir(path)
                 self._download_all_files(version, sub_dir + '/' + file['name'])
 
         file_list.close()
@@ -223,8 +225,16 @@ class OTAUpdater:
 
         pathToCreate = ''
         for x in paths:
-            os.mkdir(pathToCreate + x)
+            self.mkdir(pathToCreate + x)
             pathToCreate = pathToCreate + x + '/'
+
+    # different micropython versions act differently when directory already exists
+    def mkdir(self, path:str):
+        try:
+            os.mkdir(path)
+        except OSError as exc:
+            if exc.args[0] == 17: 
+                pass
 
 
     def modulepath(self, path):
