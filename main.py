@@ -1,7 +1,8 @@
 
 
 def connectToWifiAndUpdate():
-    import machine, network, gc, app.secrets as secrets
+    import time, machine, network, gc, app.secrets as secrets
+    time.sleep(1)
     print('Memory free', gc.mem_free())
 
     from app.ota_updater import OTAUpdater

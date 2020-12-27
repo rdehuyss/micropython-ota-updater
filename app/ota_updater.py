@@ -140,8 +140,9 @@ class OTAUpdater:
         for file in file_list.json():
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
-                download_url = file['download_url']
-                self._download_file(download_url.replace('refs/tags/', ''), path)
+                gitPath = file['path']
+                print('\tDownloading: ', gitPath, 'to', path)
+                self._download_file(version, gitPath, path)
             elif file['type'] == 'dir':
                 print('Creating dir', path)
                 self.mkdir(path)
@@ -150,13 +151,12 @@ class OTAUpdater:
         file_list.close()
 
     def _download_file(self, version, gitPath, path):
-        print('\tDownloading: ', gitPath, 'to', path)
         repo_name = self.github_repo.replace('https://api.github.com/repos/', '')
         try:
-            self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
+            self.http_client.get('https://cdn.jsdelivr.net/gh/{}@{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
         except OSError as err:
             gc.collect()
-            self.http_client.get('https://cdn.jsdelivr.net/gh/{}@{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
+            self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
             pass
         
 

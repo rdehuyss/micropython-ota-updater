@@ -1,4 +1,4 @@
-import usocket, os
+import usocket, os, time
 
 class Response:
 
@@ -7,13 +7,19 @@ class Response:
         self._saveToFile = saveToFile
         self._encoding = 'utf-8'
         if saveToFile is not None:
+            print('Saving to file', saveToFile)
+            time.sleep(1)
             CHUNK_SIZE = 512 # bytes
             with open(saveToFile, 'w') as outfile:
+                print('Opened file', saveToFile)
+                time.sleep(1)
                 data = self._socket.read(CHUNK_SIZE)
                 while data:
                     outfile.write(data)
                     data = self._socket.read(CHUNK_SIZE)
                 outfile.close()
+                print('Data written to file', saveToFile)
+                time.sleep(1)
                 
             self.close()
 
@@ -39,8 +45,14 @@ class Response:
         return str(self.content, self._encoding)
 
     def json(self):
-        import ujson
-        return ujson.loads(self.content)
+        result = None
+        try:
+            import ujson
+            result = ujson.load(self._socket)
+        finally:
+            self.close()
+        return result
+        
 
 
 class HttpClient:
@@ -49,6 +61,8 @@ class HttpClient:
         self._headers = headers
 
     def request(self, method, url, data=None, json=None, file=None, custom=None, saveToFile=None, headers={}, stream=None):
+        print('Req', url)
+
         def _write_headers(sock, _headers):
             for k in _headers:
                 sock.write(b'{}: {}\r\n'.format(k, _headers[k]))
@@ -70,18 +84,34 @@ class HttpClient:
             host, port = host.split(':', 1)
             port = int(port)
 
+        print('Getting addr info')
+        time.sleep(1)
         ai = usocket.getaddrinfo(host, port, 0, usocket.SOCK_STREAM)
         if len(ai) < 1:
             raise ValueError('You are not connected to the internet...')
         ai = ai[0]
 
-        print(ai)
-
+        print('Opening socket', ai)
+        time.sleep(1)
         s = usocket.socket(ai[0], ai[1], ai[2])
+        print('Socket open')
+        time.sleep(1)
         try:
+            print('Connecting to socket')
+            time.sleep(1)
             s.connect(ai[-1])
+            print('Connected to socket')
+            time.sleep(1)
             if proto == 'https:':
-                s = ussl.wrap_socket(s, server_hostname=host)
+                try:
+                    print('Wrapping socket with ssl')
+                    time.sleep(1)
+                    s = ussl.wrap_socket(s)
+                    print('Wrapped socket with ssl')
+                    time.sleep(1)
+                except:
+                    print("An error occurred.")
+
             s.write(b'%s /%s HTTP/1.0\r\n' % (method, path))
             if not 'Host' in headers:
                 s.write(b'Host: %s\r\n' % host)
