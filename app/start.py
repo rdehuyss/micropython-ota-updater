@@ -1,1 +1,1 @@
-print('Version 2 installed using OTA Update')
+print('Version 1 installed using USB') 
