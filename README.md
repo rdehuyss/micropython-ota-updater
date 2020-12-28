@@ -2,6 +2,8 @@
 
 This micropython module allows for automatic updating of your code on Microcontrollers using github releases. It allows you to update devices in the field with ease. 
 
+> Note: due to a bug in the SSL library of ESP8266 devices, micropython-ota-updater cannot be used on these devices. See https://github.com/rdehuyss/micropython-ota-updater/issues/6 and https://github.com/micropython/micropython/issues/6737
+
 ## History
 - 2018/07/19 - First public release
 - 2020/12/23 - Major rewrite adding support for M5Stack and low memory devices (I now can upgrade big projects with it on devices like M5Stack Core 1 which are very memory constraint) and it now also supports secrets files (which are kept during upgrades)
@@ -74,7 +76,14 @@ updater = OTAUpdater('https://github.com/sergiuszm/cae_fipy', headers={'Authoriz
 ```
 
 ### Support for secrets file
-MicroPython OTA updater now also supports a secret file (which is added to .gitignore). This secrets file must be installed initially (e.g. using USB) and will always be kept when downloading newer versions. In my case, it contains the WIFI credentials and other secret stuff.
+MicroPython OTA updater now also supports a secret file (which is added to .gitignore). This secrets file must be installed initially (e.g. using USB) and will always be kept when downloading newer versions. In my case, it contains the WIFI credentials and other secret stuff. A secrets file can be used as follows:
+
+```python
+WIFI_SSID='your-ssid'
+WIFI_PASSWORD='your-password'
+```
+See [main.pu](https://github.com/rdehuyss/micropython-ota-updater/blob/master/main.py) on how it is then used.
+
 
 ## More info?
 See the [article on Medium](https://medium.com/@ronald.dehuysser/micropython-ota-updates-and-github-a-match-made-in-heaven-45fde670d4eb).
