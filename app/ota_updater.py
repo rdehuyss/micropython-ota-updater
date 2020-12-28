@@ -1,4 +1,4 @@
-import machine, usocket, os, gc
+import os, gc
 from .httpclient import HttpClient
 
 class OTAUpdater:
@@ -9,7 +9,7 @@ class OTAUpdater:
 
     def __init__(self, github_repo, github_src_dir='', module='', main_dir='main', new_version_dir='next', secrets_file=None, headers={}):
         self.http_client = HttpClient(headers=headers)
-        self.github_repo = github_repo.rstrip('/').replace('https://github.com', 'https://api.github.com/repos')
+        self.github_repo = github_repo.rstrip('/').replace('https://github.com/', '')
         self.github_src_dir = '' if len(github_src_dir) < 1 else github_src_dir.rstrip('/') + '/'
         self.module = module.rstrip('/')
         self.main_dir = main_dir
@@ -122,7 +122,7 @@ class OTAUpdater:
         return '0.0'
 
     def get_latest_version(self):
-        latest_release = self.http_client.get(self.github_repo + '/releases/latest')
+        latest_release = self.http_client.get('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
         version = latest_release.json()['tag_name']
         latest_release.close()
         return version
@@ -133,10 +133,9 @@ class OTAUpdater:
         print('Version {} downloaded to {}'.format(version, self.modulepath(self.new_version_dir)))
 
     def _download_all_files(self, version, sub_dir=''):
-        root_url = self.github_repo + '/contents/' + self.github_src_dir + self.main_dir + sub_dir
-        print(root_url)
-        gc.collect()
-        file_list = self.http_client.get(root_url + '?ref=refs/tags/' + version)
+        url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
+        gc.collect() 
+        file_list = self.http_client.get(url)
         for file in file_list.json():
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
@@ -147,18 +146,12 @@ class OTAUpdater:
                 print('Creating dir', path)
                 self.mkdir(path)
                 self._download_all_files(version, sub_dir + '/' + file['name'])
+            gc.collect()
 
         file_list.close()
 
     def _download_file(self, version, gitPath, path):
-        repo_name = self.github_repo.replace('https://api.github.com/repos/', '')
-        try:
-            self.http_client.get('https://cdn.jsdelivr.net/gh/{}@{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
-        except OSError as err:
-            gc.collect()
-            self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(repo_name, version, gitPath), saveToFile=path)
-            pass
-        
+        self.http_client.get('https://raw.githubusercontent.com/{}/{}/{}'.format(self.github_repo, version, gitPath), saveToFile=path)
 
     def _copy_secrets_file(self):
         if self.secrets_file:
@@ -195,8 +188,7 @@ class OTAUpdater:
         self._mk_dirs('otaUpdater/osRenameTest')
         os.rename('otaUpdater', 'otaUpdated')
         result = len(os.listdir('otaUpdated')) > 0
-        os.rmdir('otaUpdated/osRenameTest')
-        os.rmdir('otaUpdated')
+        self._rmtree('otaUpdated')
         return result
 
     def _copy_directory(self, fromPath, toPath):
