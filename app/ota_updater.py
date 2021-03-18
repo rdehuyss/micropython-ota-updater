@@ -21,11 +21,11 @@ class OTAUpdater:
 
     def check_for_update_to_install_during_next_reboot(self) -> bool:
         """Function which will check the GitHub repo if there is a newer version available.
-        
-        This method expects an active internet connection and will compare the current 
+
+        This method expects an active internet connection and will compare the current
         version with the latest version available on GitHub.
-        If a newer version is available, the file 'next/.version' will be created 
-        and you need to call machine.reset(). A reset is needed as the installation process 
+        If a newer version is available, the file 'next/.version' will be created
+        and you need to call machine.reset(). A reset is needed as the installation process
         takes up a lot of memory (mostly due to the http stack)
 
         Returns
@@ -43,9 +43,9 @@ class OTAUpdater:
 
     def install_update_if_available_after_boot(self, ssid, password) -> bool:
         """This method will install the latest version if out-of-date after boot.
-        
-        This method, which should be called first thing after booting, will check if the 
-        next/.version' file exists. 
+
+        This method, which should be called first thing after booting, will check if the
+        next/.version' file exists.
 
         - If yes, it initializes the WIFI connection, downloads the latest version and installs it
         - If no, the WIFI connection is not initialized as no new known version is available
@@ -58,15 +58,15 @@ class OTAUpdater:
                 OTAUpdater._using_network(ssid, password)
                 self.install_update_if_available()
                 return True
-            
+
         print('No new updates found...')
         return False
 
     def install_update_if_available(self) -> bool:
         """This method will immediately install the latest version if out-of-date.
-        
+
         This method expects an active internet connection and allows you to decide yourself
-        if you want to install the latest version. It is necessary to run it directly after boot 
+        if you want to install the latest version. It is necessary to run it directly after boot
         (for memory reasons) and you need to restart the microcontroller if a new version is found.
 
         Returns
@@ -83,7 +83,7 @@ class OTAUpdater:
             self._delete_old_version()
             self._install_new_version()
             return True
-        
+
         return False
 
 
@@ -123,7 +123,15 @@ class OTAUpdater:
 
     def get_latest_version(self):
         latest_release = self.http_client.get('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
-        version = latest_release.json()['tag_name']
+        gh_json = latest_release.json()
+        try:
+            version = gh_json['tag_name']
+        except KeyError as e:
+            raise ValueError(
+                'Release not found: \n'
+                'Please ensure release as marked as 'latest', rather than pre-release \n'
+                'github api message: \n {} \n '.format(gh_json)
+            )
         latest_release.close()
         return version
 
@@ -134,9 +142,10 @@ class OTAUpdater:
 
     def _download_all_files(self, version, sub_dir=''):
         url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
-        gc.collect() 
+        gc.collect()
         file_list = self.http_client.get(url)
-        for file in file_list.json():
+        file_list_json = file_list.json()
+        for file in file_list_json:
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
                 gitPath = file['path']
