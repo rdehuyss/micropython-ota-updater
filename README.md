@@ -82,7 +82,7 @@ MicroPython OTA updater now also supports a secret file (which is added to .giti
 WIFI_SSID='your-ssid'
 WIFI_PASSWORD='your-password'
 ```
-See [main.pu](https://github.com/rdehuyss/micropython-ota-updater/blob/master/main.py) on how it is then used.
+See [main.py](https://github.com/rdehuyss/micropython-ota-updater/blob/master/main.py) on how it is then used.
 
 
 ## More info?
