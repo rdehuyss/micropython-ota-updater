@@ -123,7 +123,15 @@ class OTAUpdater:
 
     def get_latest_version(self):
         latest_release = self.http_client.get('https://api.github.com/repos/{}/releases/latest'.format(self.github_repo))
-        version = latest_release.json()['tag_name']
+        gh_json = latest_release.json()
+        try:
+            version = gh_json['tag_name']
+        except KeyError as e:
+            raise ValueError(
+                "Release not found: \n",
+                "Please ensure release as marked as 'latest', rather than pre-release \n",
+                "github api message: \n {} \n ".format(gh_json)
+            )
         latest_release.close()
         return version
 
@@ -136,7 +144,8 @@ class OTAUpdater:
         url = 'https://api.github.com/repos/{}/contents{}{}{}?ref=refs/tags/{}'.format(self.github_repo, self.github_src_dir, self.main_dir, sub_dir, version)
         gc.collect() 
         file_list = self.http_client.get(url)
-        for file in file_list.json():
+        file_list_json = file_list.json()
+        for file in file_list_json:
             path = self.modulepath(self.new_version_dir + '/' + file['path'].replace(self.main_dir + '/', '').replace(self.github_src_dir, ''))
             if file['type'] == 'file':
                 gitPath = file['path']

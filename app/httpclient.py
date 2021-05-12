@@ -1,4 +1,4 @@
-import usocket, os
+import usocket, os, gc
 class Response:
 
     def __init__(self, socket, saveToFile=None):
@@ -50,7 +50,12 @@ class HttpClient:
     def __init__(self, headers={}):
         self._headers = headers
 
+    def is_chunked_data(data):
+        return getattr(data, "__iter__", None) and not getattr(data, "__len__", None)
+
     def request(self, method, url, data=None, json=None, file=None, custom=None, saveToFile=None, headers={}, stream=None):
+        chunked = data and self.is_chunked_data(data)
+        redirect = None #redirection url, None means no redirection
         def _write_headers(sock, _headers):
             for k in _headers:
                 sock.write(b'{}: {}\r\n'.format(k, _headers[k]))
@@ -81,6 +86,7 @@ class HttpClient:
         try:
             s.connect(ai[-1])
             if proto == 'https:':
+                gc.collect()
                 s = ussl.wrap_socket(s, server_hostname=host)
             s.write(b'%s /%s HTTP/1.0\r\n' % (method, path))
             if not 'Host' in headers:
@@ -98,9 +104,20 @@ class HttpClient:
                 s.write(b'Content-Type: application/json\r\n')
 
             if data:
-                s.write(b'Content-Length: %d\r\n' % len(data))
-                s.write(b'\r\n')
-                s.write(data)
+                if chunked:
+                    s.write(b"Transfer-Encoding: chunked\r\n")
+                else:
+                    s.write(b"Content-Length: %d\r\n" % len(data))
+            s.write(b"\r\n")
+            if data:
+                if chunked:
+                    for chunk in data:
+                        s.write(b"%x\r\n" % len(chunk))
+                        s.write(chunk)
+                        s.write(b"\r\n")
+                    s.write("0\r\n\r\n")
+                else:
+                    s.write(data)
             elif file:
                 s.write(b'Content-Length: %d\r\n' % os.stat(file)[6])
                 s.write(b'\r\n')
@@ -113,7 +130,7 @@ class HttpClient:
                 s.write(b'\r\n')
 
             l = s.readline()
-            # print(l)
+            #print('l: ', l)
             l = l.split(None, 2)
             status = int(l[1])
             reason = ''
@@ -123,20 +140,30 @@ class HttpClient:
                 l = s.readline()
                 if not l or l == b'\r\n':
                     break
-                # print(l)
+                #print('l: ', l)
                 if l.startswith(b'Transfer-Encoding:'):
                     if b'chunked' in l:
                         raise ValueError('Unsupported ' + l)
                 elif l.startswith(b'Location:') and not 200 <= status <= 299:
-                    raise NotImplementedError('Redirects not yet supported')
+                    if status in [301, 302, 303, 307, 308]:
+                        redirect = l[10:-2].decode()
+                    else:
+                        raise NotImplementedError("Redirect {} not yet supported".format(status))
         except OSError:
             s.close()
             raise
 
-        resp = Response(s, saveToFile)
-        resp.status_code = status
-        resp.reason = reason
-        return resp
+        if redirect:
+            s.close()
+            if status in [301, 302, 303]:
+                return self.request('GET', url=redirect, **kw)
+            else:
+                return self.request(method, redirect, **kw)
+        else:
+            resp = Response(s,saveToFile)
+            resp.status_code = status
+            resp.reason = reason
+            return resp
 
     def head(self, url, **kw):
         return self.request('HEAD', url, **kw)
