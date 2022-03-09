@@ -1,0 +1,29 @@
+name: Publish Package
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.x"
+
+      - name: Install Twine
+        run: pip install twine
+
+      - name: Build package
+        run: python setup.py sdist
+
+      - name: Publish the package to PyPi
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: twine upload -u __token__ -p $PYPI_TOKEN dist/*
